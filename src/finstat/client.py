@@ -89,4 +89,3 @@ class FinstatClient:
         else:
             logging.info(f"Error : ico {params['ico']} is not a valid ico in the Finstat database")
             return False
-        
