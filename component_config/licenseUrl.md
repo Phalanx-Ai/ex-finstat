@@ -1,0 +1,1 @@
+https://github.com/Phalanx-Ai/ex-finstat/blob/master/LICENSE.md

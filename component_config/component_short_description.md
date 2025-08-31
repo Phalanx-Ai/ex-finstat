@@ -1,0 +1,1 @@
+Finstat contains data on Slovak companies, their revenues, tax codes, industries, etc.
