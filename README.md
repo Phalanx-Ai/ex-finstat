@@ -1,84 +1,55 @@
-Finstat Extractor
-=============
+# Finstat Extractor for Keboola
 
-Description
+This extractor enables you to extract data from the Finstat website (finstat.sk) to get data on companies 
+in their database. The extractor requires an input table with rows containing the ICO codes of the companies.
+It returns the data from described in the premium API documentation.
 
-**Table of Contents:**
 
-[TOC]
 
-Functionality Notes
-===================
+# Functionality notes
 
-Prerequisites
-=============
+This extractor requires a Premium API account in finstat described here : https://finstat.sk/api
 
-Ensure you have the necessary API token, register the application, etc.
+You will need a Finstat API code and a private key.
 
-Features
-========
+The input table requires a column with rows of ICO codes.
+If a column is named "ico" it will use this, otherwise it will use the
+first column of the input table
 
-| **Feature**             | **Description**                               |
-|-------------------------|-----------------------------------------------|
-| Generic UI Form         | Dynamic UI form for easy configuration.       |
-| Row-Based Configuration | Allows structuring the configuration in rows. |
-| OAuth                   | OAuth authentication enabled.                 |
-| Incremental Loading     | Fetch data in new increments.                 |
-| Backfill Mode           | Supports seamless backfill setup.             |
-| Date Range Filter       | Specify the date range for data retrieval.    |
+The extractor will output a list of ICO codes that were not possible to be 
+retrieved from Finstat.
 
-Supported Endpoints
-===================
+# Configuration
 
-If you need additional endpoints, please submit your request to
-[ideas.keboola.com](https://ideas.keboola.com/).
+Fill in these required paramters in you extractor configuration
 
-Configuration
-=============
+## Param 1 : API code 
+API code - received from your Finstat account
 
-Param 1
--------
-Details about parameter 1.
+## Param 2 : Private key 
+Private key - received from your Finstat account
 
-Param 2
--------
-Details about parameter 2.
+## Param 2 : Request type 
+Based on your Finstat API account you will have access to different API calls.
 
-Output
-======
+For example Premium API users can only use the "detail" API calls
 
-Provides a list of tables, foreign keys, and schema.
+Elite API users can use the "extended" calls that give more data
 
-Development
------------
+Ultimate API users can use "ultimate" calls that give more data.
 
-To customize the local data folder path, replace the `CUSTOM_FOLDER` placeholder with your desired path in the `docker-compose.yml` file:
+The API data retrieved can be seen in the Finstat API documentation 
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    volumes:
-      - ./:/code
-      - ./CUSTOM_FOLDER:/data
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Clone this repository, initialize the workspace, and run the component using the following
-commands:
+## Deployment in Keboola
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-git clone https://github.com/Phalanx-Ai/ex-finstat ex-finstat
-cd ex-finstat
-docker-compose build
-docker-compose run --rm dev
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+While the component is not published, you must add it to your project by a link (Using EU connection):
 
-Run the test suite and perform lint checks using this command:
+https://connection.eu-central-1.keboola.com/admin/projects/{YOUR PROJECT CODE}/extractors/phalanx-ai.finstat-extractor
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-docker-compose run --rm test
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Then add the input table to the table input mapping
 
-Integration
-===========
+Then fill in your API key and Private key (It will get encrypted and hidden)
 
-For details about deployment and integration with Keboola, refer to the
-[deployment section of the developer
-documentation](https://developers.keboola.com/extend/component/deployment/).
+Then run the component, the output will be shown in storage, you can find a link to the output in the job run overview
+

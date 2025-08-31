@@ -1,87 +1,126 @@
 """
-Template Component main class.
-
+Finstat Keboola Component - Modernized Template
 """
 import csv
-from datetime import datetime
 import logging
+from datetime import datetime
 
 from keboola.component.base import ComponentBase
 from keboola.component.exceptions import UserException
 
 from configuration import Configuration
+from finstat.client import FinstatClient
+
+# Constants
+API_LIMIT = 5000
+KEY_TIMESTAMP = "timestamp"
+
+DETAIL = [
+    "Ico", "RegisterNumberText", "Dic", "IcDPH", "Name", "Street", "StreetNumber", "ZipCode", "City", "District",
+    "Region", "Country", "Activity", "Created", "Cancelled", "SuspendedAsPerson", "Url", "Warning", "WarningUrl",
+    "PaymentOrderWarning", "PaymentOrderUrl", "OrChange", "OrChangeUrl", "Revenue", "SkNaceCode", "SkNaceText",
+    "SkNaceDivision", "SkNaceGroup", "LegalFormCode", "LegalFormText", "RpvsInsert", "RpvsUrl", "ProfitActual",
+    "RevenueActual", "JudgementFinstatLink", "SalesCategory", "HasKaR", "KarUrl", "HasDebt", "DebtUrl",
+    "JudgementIndicators"
+]
+
+EXTENDED = [
+    "Ico", "Dic", "IcDPH", "Name", "Street", "StreetNumber", "ZipCode", "City", "Activity", "District",
+    "Region", "Country", "Created", "Cancelled", "SuspendedAsPerson", "Url", "RegisterNumberText", "IcDphAdditional",
+    "SkNaceCode", "SkNaceText", "SkNaceDivision", "SkNaceGroup", "Phones", "Emails", "Warning", "WarningUrl", "Debts",
+    "StateReceivables", "CommercialReceivables", "PaymentOrderWarning", "PaymentOrderUrl", "PaymentOrders", "OrChange",
+    "OrChangeUrl", "EmployeeCode", "EmployeeText", "LegalFormCode", "LegalFormText", "RpvsInsert", "RpvsUrl",
+    "OwnershipTypeCode", "OwnershipTypeText", "CreditScoreValue", "ProfitActual", "ProfitPrev", "RevenueActual",
+    "RevenuePrev", "ActualYear", "CreditScoreState", "ForeignResources", "GrossMargin", "ROA", "WarningLiquidation",
+    "SelfEmployed", "WarningKaR", "Offices", "Subjects", "StructuredName", "HasKaR", "KarUrl", "HasDebt", "DebtUrl",
+    "HasDisposal", "DisposalUrl", "ContactSources", "BasicCapital", "JudgementIndicators", "JudgementFinstatLink",
+    "JudgementCounts", "JudgementLastPublishedDate", "Ratios", "SalesCategory"
+]
 
 
 class Component(ComponentBase):
-    """
-        Extends base class for general Python components. Initializes the CommonInterface
-        and performs configuration validation.
-
-        For easier debugging the data folder is picked up by default from `../data` path,
-        relative to working directory.
-
-        If `debug` parameter is present in the `config.json`, the default logger is set to verbose DEBUG mode.
-    """
-
-    def __init__(self):
-        super().__init__()
 
     def run(self):
         """
         Main execution code
         """
-
-        # ####### EXAMPLE TO REMOVE
-        # check for missing configuration parameters
         params = Configuration(**self.configuration.parameters)
 
-        # Access parameters in configuration
-        if params.print_hello:
-            logging.info("Hello World")
+        # select requested schema
+        if params.request_type == "detail":
+            request_cols = DETAIL
+        elif params.request_type == "extended":
+            request_cols = EXTENDED
+        else:
+            raise UserException(f"Unsupported request_type: {params.request_type}")
 
-        # get input table definitions
         input_tables = self.get_input_tables_definitions()
-        for table in input_tables:
-            logging.info(f'Received input table: {table.name} with path: {table.full_path}')
+        if not input_tables:
+            raise UserException("No input tables provided")
 
-        if len(input_tables) == 0:
-            raise UserException("No input tables found")
+        input_file = input_tables[0].full_path
+        input_icos = self._get_input_icos(input_file, params.ico_field)
+        client = FinstatClient(params.api_key, params.private_key, params.request_type)
 
-        # get last state data/in/state.json from previous run
-        previous_state = self.get_state_file()
-        logging.info(previous_state.get('some_parameter'))
+        timestamp = datetime.now().isoformat()
+        results, bad_icos = self._get_results(client, input_icos, request_cols, timestamp)
 
-        # Create output table (Table definition - just metadata)
-        table = self.create_out_table_definition('output.csv', incremental=True, primary_key=['timestamp'])
+        # add timestamp column
+        request_cols_with_ts = request_cols + [KEY_TIMESTAMP]
 
-        # get file path of the table (data/out/tables/Features.csv)
-        out_table_path = table.full_path
-        logging.info(out_table_path)
+        # good results
+        self._write_results(
+            results,
+            request_type=params.request_type,
+            columns=request_cols_with_ts,
+            filename_suffix=""
+        )
 
-        # Add timestamp column and save into out_table_path
-        input_table = input_tables[0]
-        with (open(input_table.full_path, 'r') as inp_file,
-              open(table.full_path, mode='wt', encoding='utf-8', newline='') as out_file):
-            reader = csv.DictReader(inp_file)
+        # bad ICOs
+        self._write_results(
+            bad_icos,
+            request_type=params.request_type,
+            columns=["Ico"],
+            filename_suffix="_bad_icos",
+            incremental=False
+        )
 
-            columns = list(reader.fieldnames)
-            # append timestamp
-            columns.append('timestamp')
+    def _get_input_icos(self, input_file, ico_field):
+        icos = []
+        with open(input_file, "r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                icos.append(row[ico_field])
 
-            # write result with column added
+        if len(icos) > API_LIMIT:
+            logging.warning(f"More than {API_LIMIT} ICOs requested, truncating to {API_LIMIT}")
+            return icos[:API_LIMIT]
+        return icos
+
+    def _get_results(self, client, input_icos, request_cols, timestamp):
+        results, bad_icos = [], []
+        for ico in input_icos:
+            result = client.get_ico_data(ico)
+            if result:
+                normalized = {col: result.get(col, "") for col in request_cols}
+                normalized[KEY_TIMESTAMP] = timestamp
+                results.append(normalized)
+            else:
+                bad_icos.append({"Ico": ico})
+        return results, bad_icos
+
+    def _write_results(self, results, request_type, columns, filename_suffix="", incremental=True):
+        filename = f"finstat_{request_type}{filename_suffix}.csv"
+        table = self.create_out_table_definition(filename, incremental=incremental, primary_key=["Ico"])
+        table.columns = columns
+
+        with open(table.full_path, mode="wt", encoding="utf-8", newline="") as out_file:
             writer = csv.DictWriter(out_file, fieldnames=columns)
             writer.writeheader()
-            for in_row in reader:
-                in_row['timestamp'] = datetime.now().isoformat()
-                writer.writerow(in_row)
+            for row in results:
+                writer.writerow(row)
 
-        # Save table manifest (output.csv.manifest) from the Table definition
         self.write_manifest(table)
-
-        # Write new state - will be available next run
-        self.write_state_file({"some_state_parameter": "value"})
-
-        # ####### EXAMPLE TO REMOVE END
 
 
 """
@@ -90,7 +129,6 @@ class Component(ComponentBase):
 if __name__ == "__main__":
     try:
         comp = Component()
-        # this triggers the run method by default and is controlled by the configuration.action parameter
         comp.execute_action()
     except UserException as exc:
         logging.exception(exc)

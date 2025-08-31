@@ -1,6 +1,9 @@
-keboola.component
 keboola.utils
 keboola.http-client
 freezegun
 mock
-pydantic
+keboola.component>=1.4.0
+requests>=2.31.0
+xmltodict>=0.13.0
+retry>=0.9.2
+pydantic>=2.6.0
