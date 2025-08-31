@@ -1,19 +1,43 @@
 {
   "type": "object",
-  "title": "extractor configuration",
-  "required": [
-    "print_hello"
-  ],
+  "title": "Parameters",
   "properties": {
-    "print_hello": {
-      "type": "boolean",
-      "title": "Print Hello",
+    "api_key": {
+      "type": "string",
+      "title": "API Key",
+      "default": "",
+      "minLength": 1,
+      "description": "API Key provided with your finstat account",
       "propertyOrder": 1
     },
-    "debug": {
-      "type": "boolean",
-      "title": "Debug",
+    "ico_field": {
+      "type": "string",
+      "title": "ICO field",
+      "default": "",
+      "minLength": 1,
+      "description": "Name of field in the input file which contains the ICO number",
+      "propertyOrder": 4
+    },
+    "#private_key": {
+      "type": "string",
+      "title": "API Private Key",
+      "format": "password",
+      "default": "",
+      "minLength": 1,
+      "description": "Private Key provided with your finstat account",
       "propertyOrder": 2
+    },
+    "request_type": {
+      "enum": [
+        "detail",
+        "extended"
+      ],
+      "type": "string",
+      "title": "API Request type",
+      "default": "detail",
+      "minLength": 1,
+      "description": "Type of request, limited by your finstat account type. Options are : detail, extended, ultimate. Check Finstat documentation for more information",
+      "propertyOrder": 3
     }
   }
 }
