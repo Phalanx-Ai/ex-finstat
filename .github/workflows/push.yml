@@ -3,7 +3,7 @@ on: [ push ]
 concurrency: ci-${{ github.ref }} # to avoid tag collisions in the ECR
 env:
   # repository variables:
-  KBC_DEVELOPERPORTAL_APP: "phalanx-ai.ex-service-name"
+  KBC_DEVELOPERPORTAL_APP: "phalanx-ai.ex-finstat"
   KBC_DEVELOPERPORTAL_VENDOR: "phalanx-ai" 
   DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
   KBC_DEVELOPERPORTAL_USERNAME: ${{ secrets.KBC_DEVELOPERPORTAL_USERNAME }}
