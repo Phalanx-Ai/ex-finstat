@@ -3,8 +3,8 @@ on: [ push ]
 concurrency: ci-${{ github.ref }} # to avoid tag collisions in the ECR
 env:
   # repository variables:
-  KBC_DEVELOPERPORTAL_APP: "phalanx-ai.ex-finstat" # replace with your component id
-  KBC_DEVELOPERPORTAL_VENDOR: "phalanx-ai" # replace with your vendor
+  KBC_DEVELOPERPORTAL_APP: "phalanx-ai.ex-service-name"
+  KBC_DEVELOPERPORTAL_VENDOR: "phalanx-ai" 
   DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
   KBC_DEVELOPERPORTAL_USERNAME: ${{ vars.KBC_DEVELOPERPORTAL_USERNAME }}
 
@@ -181,8 +181,8 @@ jobs:
           app_id: ${{ env.KBC_DEVELOPERPORTAL_APP }}
           username: ${{ env.KBC_DEVELOPERPORTAL_USERNAME }}
           password: ${{ secrets.KBC_DEVELOPERPORTAL_PASSWORD }}
-          tag: latest
-          push_latest: true
+          tag: ${{ needs.push_event_info.outputs.app_image_tag }}
+          push_latest: ${{ needs.push_event_info.outputs.is_deploy_ready }}
           source_image: ${{ env.KBC_DEVELOPERPORTAL_APP }}
 
   deploy:
@@ -203,7 +203,7 @@ jobs:
           app_id: ${{ env.KBC_DEVELOPERPORTAL_APP }}
           username: ${{ env.KBC_DEVELOPERPORTAL_USERNAME }}
           password: ${{ secrets.KBC_DEVELOPERPORTAL_PASSWORD }}
-          tag: latest
+          tag: ${{ needs.push_event_info.outputs.app_image_tag }}
 
   update_developer_portal_properties:
     name: Developer Portal Properties Update
