@@ -181,8 +181,8 @@ jobs:
           app_id: ${{ env.KBC_DEVELOPERPORTAL_APP }}
           username: ${{ env.KBC_DEVELOPERPORTAL_USERNAME }}
           password: ${{ secrets.KBC_DEVELOPERPORTAL_PASSWORD }}
-          tag: ${{ needs.push_event_info.outputs.app_image_tag }}
-          push_latest: ${{ needs.push_event_info.outputs.is_deploy_ready }}
+          tag: latest
+          push_latest: true
           source_image: ${{ env.KBC_DEVELOPERPORTAL_APP }}
 
   deploy:
@@ -203,7 +203,7 @@ jobs:
           app_id: ${{ env.KBC_DEVELOPERPORTAL_APP }}
           username: ${{ env.KBC_DEVELOPERPORTAL_USERNAME }}
           password: ${{ secrets.KBC_DEVELOPERPORTAL_PASSWORD }}
-          tag: ${{ needs.push_event_info.outputs.app_image_tag }}
+          tag: latest
 
   update_developer_portal_properties:
     name: Developer Portal Properties Update
