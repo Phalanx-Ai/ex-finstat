@@ -6,7 +6,7 @@ env:
   KBC_DEVELOPERPORTAL_APP: "phalanx-ai.ex-service-name"
   KBC_DEVELOPERPORTAL_VENDOR: "phalanx-ai" 
   DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
-  KBC_DEVELOPERPORTAL_USERNAME: ${{ vars.KBC_DEVELOPERPORTAL_USERNAME }}
+  KBC_DEVELOPERPORTAL_USERNAME: ${{ secrets.KBC_DEVELOPERPORTAL_USERNAME }}
 
   # repository secrets:
   DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }} # recommended for pushing to ECR
